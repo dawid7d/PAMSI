@@ -1,0 +1,451 @@
+#include <iostream>
+#include <fstream>
+#include <time.h>
+#include <vector>
+#include <cstdlib>
+#include <algorithm>
+#include <iomanip>
+using namespace std;
+
+//=======================================//
+class Krawedz
+{
+public:
+    int v1,v2,waga;
+};
+//=======================================//
+class Graf
+{
+public:
+
+    int wierzcholki=7;      //<========= wierzcholki
+    int krawedzie=0.5*(wierzcholki*(wierzcholki-1))/2; //<========= gestosc
+
+    void zapisz_graf_pelny();
+    void zapisz_graf();
+
+};
+//=======================================//
+class Lista : public Graf, public Krawedz
+{
+public:
+
+    vector <vector <Krawedz> > lista_grafow;
+    vector <Krawedz> lista_krawedzi;
+
+    void wczyta_liste();
+    void wyswietl();
+};
+//=======================================//
+class Macierz : public Graf
+{
+public:
+    vector<Macierz> macierz;
+    int macierz_sasiedztwa[7][7];            //<========= wierzcholki
+
+    void wczytaj_macierz();
+    void wyswietl();
+
+};
+//=======================================//
+class Kruskal : public Lista
+{
+    int nr_grafu;
+public:
+
+    vector<Krawedz> drzewo;
+    vector<Krawedz> kolejka_priorytetowa;
+
+    void stworz_kolejke();
+    void macierz_na_kolejke();
+    void wyswietl_kolejke();
+    void stworz_drzewo();
+    void wyswietl_drzewo();
+
+};
+//=======================================/
+class Prim : public Kruskal
+{
+public:
+
+    void stworz_drzewo();
+};
+//=======================================//
+int porownaj2( const Krawedz & a, const Krawedz & b ){return a.v1 < b.v1;}
+int porownaj3( const Krawedz & a, const Krawedz & b ){return a.waga < b.waga;}
+///////////////////////////////////////////////////////////////////////////////////
+int main()
+{
+    clock_t s, f;
+    double czas=0;
+    double czas_tab[100];
+    srand(time(NULL));
+
+    Graf g;
+    Lista l;
+    Macierz m;
+    Kruskal k;
+    Prim p;
+
+    cout<<"============================ START ============================"<<endl;
+    g.zapisz_graf();
+
+    l.wczyta_liste();
+    l.wyswietl();
+
+    m.wczytaj_macierz();
+    m.wyswietl();
+    cout<<" ================================= KRUSKAL =================================="<<endl;
+//////////////////////////// KRUSKAL ////////////////////////////
+
+    for(int ktora=0; ktora<2; ktora++)
+    {
+        k.kolejka_priorytetowa.clear();
+        k.drzewo.clear();
+
+// start czas //
+        s=clock();
+
+
+// Lista Kruskal //
+
+        for(int i=0; i<g.krawedzie; i++)
+            k.kolejka_priorytetowa.push_back(l.lista_grafow[ktora][i]);
+
+
+// Macierz Kruskal //
+        /*
+            int licznik=0;
+            for(int i=0; i<g.wierzcholki; i++)
+            for(int j=i+1; j<g.wierzcholki; j++)
+            if(m.macierz[ktora].macierz_sasiedztwa[i][j]!=0)
+            {
+                k.kolejka_priorytetowa.push_back(Krawedz());
+                k.kolejka_priorytetowa[licznik].v1=i;
+                k.kolejka_priorytetowa[licznik].v2=j;
+                k.kolejka_priorytetowa[licznik].waga=m.macierz[ktora].macierz_sasiedztwa[i][j];
+                licznik++;
+            }
+        */
+
+
+// kolejka prioytetowa i drzewo Kruskal //
+
+        k.stworz_kolejke();
+        k.wyswietl_kolejke();
+        k.stworz_drzewo();
+        k.wyswietl_drzewo();
+
+// czas stop //
+
+        f=clock();
+        czas=(double)(f-s)/(double)(CLOCKS_PER_SEC);
+        czas_tab[0]=czas;
+        cout<<czas<<endl;
+    }
+    cout<<" ================================= PRIM =================================="<<endl;
+//////////////////////////// Prim ////////////////////////////
+    for(int ktora=0; ktora<2; ktora++)
+    {
+        p.kolejka_priorytetowa.clear();
+        p.drzewo.clear();
+
+// start czas //
+        s=clock();
+
+// Lista PRIM //
+/*
+            for(int i=0; i<g.krawedzie; i++)
+            p.kolejka_priorytetowa.push_back(l.lista_grafow[ktora][i]);
+*/
+// Macierz PRIM //
+
+        int licznik=0;
+        for(int i=0; i<g.wierzcholki; i++)
+            for(int j=i+1; j<g.wierzcholki; j++)
+                if(m.macierz[ktora].macierz_sasiedztwa[i][j]!=0)
+                {
+                    p.kolejka_priorytetowa.push_back(Krawedz());
+                    p.kolejka_priorytetowa[licznik].v1=i;
+                    p.kolejka_priorytetowa[licznik].v2=j;
+                    p.kolejka_priorytetowa[licznik].waga=m.macierz[ktora].macierz_sasiedztwa[i][j];
+                    licznik++;
+                }
+
+        p.stworz_kolejke();
+        p.wyswietl_kolejke();
+        p.stworz_drzewo();
+        p.wyswietl_drzewo();
+
+
+        // czas stop //
+        f=clock();
+        czas=(double)(f-s)/(double)(CLOCKS_PER_SEC);
+        czas_tab[0]=czas;
+        cout<<czas<<endl;
+    }
+    cout<<"============================ STOP ============================"<<endl;
+}
+
+///////////////////////////////////////////////////////////////////////////////////
+//=======================================// Graf
+void Graf::zapisz_graf()
+{
+    int macierz_pomoc[wierzcholki][wierzcholki]; //sprawdza czy byla krawedz
+    int a,b; // pomocnicze
+
+    fstream plik;
+    plik.open("grafy.txt",ios::out);
+
+    for(int i=0; i<100; i++)
+    {
+        int licznik=0;
+
+        plik<<wierzcholki<<" "<<krawedzie<<endl;
+
+        for(int i=0; i<wierzcholki; i++) //macierz pomocnicza wypelnieam 0
+            for(int j=0; j<wierzcholki; j++)
+                macierz_pomoc[i][j]=0;
+
+        for (int j=0; j<krawedzie; j++) // losowanie liczb
+        {
+
+            a=rand()%wierzcholki;   // if(j<=wierzcholki){a=j}
+            b=rand()%wierzcholki;   //else {a=rand()%wierzcholki
+
+            while(b==a || macierz_pomoc[a][b]==1 )
+            {
+                a=rand()%wierzcholki;
+                b=rand()%wierzcholki;
+            }
+
+            macierz_pomoc[a][b]=1;
+            macierz_pomoc[b][a]=1;
+
+            plik<<a<<" "<<b<<" "<<rand()%100<<endl;
+        }
+    }
+    plik.close();
+}
+//=======================================// Graf
+void Graf::zapisz_graf_pelny()
+{
+    int pomoc,licznik;
+
+    fstream plik;
+    plik.open("grafy.txt",ios::out);
+
+    for(int i=0; i<100; i++)
+    {
+
+        plik<<wierzcholki<<" "<<krawedzie<<endl;
+
+        for (int j=0; j<wierzcholki-1; j++)
+        {
+            for(int k=0; k<(wierzcholki-1)-j; k++)
+            {
+                plik<<j<<" "<<j+k+1<<" "<<1+rand()%50<<endl;
+            }
+        }
+    }
+    plik.close();
+}
+//=======================================// Lista
+void Lista::wczyta_liste()
+{
+ int _wierzcholki,_krawedzie,dane,licznik=0;
+
+    ifstream plik;
+    plik.open("grafy.txt",ios::in);
+
+    for(int i=0; i<krawedzie; i++)
+        lista_krawedzi.push_back(Krawedz());
+
+    for(int k=0; k<100; k++)
+    {
+        plik>>_wierzcholki>>_krawedzie;
+
+        for(int j=0; j<_krawedzie; j++)
+        {
+            plik>>dane;
+            lista_krawedzi[j].v1=dane;
+            plik>>dane;
+            lista_krawedzi[j].v2=dane;
+            plik>>dane;
+            lista_krawedzi[j].waga=dane;
+        }
+
+        sort(lista_krawedzi.begin(),lista_krawedzi.end(),porownaj2);
+        lista_grafow.push_back(lista_krawedzi);
+
+        licznik++;
+    }
+    plik.close();
+}
+//=======================================// Lista
+void Lista::wyswietl()
+{
+    for(int i=0; i<1; i++)
+    {
+        cout<<"Graf: "<<i<<endl;
+
+        for(int j=0; j<krawedzie; j++)
+        {
+            cout<<lista_grafow[i][j].v1<<"  "<<lista_grafow[i][j].v2<<"  "<<lista_grafow[i][j].waga<<endl;
+        }
+    }
+}
+//=======================================// Macierz
+void Macierz::wczytaj_macierz()
+{
+    int _wierzcholki,_krawedzie,dane,licznik=0;
+    int a,b,c;
+
+    ifstream plik;
+    plik.open("grafy.txt",ios::in);
+
+    for(int k=0; k<100; k++)
+    {
+        macierz.push_back(Macierz());
+
+        plik>>_wierzcholki>>_krawedzie;
+
+        for(int j=0; j<_krawedzie; j++)
+        {
+            plik>>a>>b>>c;
+            macierz[k].macierz_sasiedztwa[a][b]=c;
+            macierz[k].macierz_sasiedztwa[b][a]=c;
+            macierz[k].macierz_sasiedztwa[a][a]=0;
+            macierz[k].macierz_sasiedztwa[b][b]=0;
+        }
+    }
+}
+//=======================================// Macierz
+void Macierz::wyswietl()
+{
+    for(int k=0; k<1; k++)
+    {
+        cout<<" Macierz "<<k<<endl;
+        for(int j=0; j<wierzcholki; j++)
+        {
+            for(int i=0; i<wierzcholki; i++)
+            {
+                cout.width(2);
+                cout<<macierz[k].macierz_sasiedztwa[j][i]<<" ";
+            }
+            cout<<endl;
+        }
+    }
+}
+//=======================================// Kruskal
+void Kruskal::stworz_kolejke()
+{
+    sort(kolejka_priorytetowa.begin(),kolejka_priorytetowa.end(),porownaj3); //sortowanie wedlug wag
+}
+//=======================================// Kruskal
+void Kruskal::wyswietl_kolejke()
+{
+cout<<"\nKolejka priorytetowa"<<endl;
+for(int i=0;i<krawedzie;i++)
+cout<<kolejka_priorytetowa[i].v1<<" "<<kolejka_priorytetowa[i].v2<<" "<<kolejka_priorytetowa[i].waga<<endl;
+}
+//=======================================// Kruskal
+void Kruskal::stworz_drzewo()
+{
+
+    int kolory[wierzcholki],a,b; //pomocnicze
+
+    for(int i=0; i<wierzcholki; i++) kolory[i]=0; // zbiory wierzcholkow pusty =0
+
+    int licznik=0;
+    int tmp=0;int tmq; //pomocnicze
+
+
+    for(int i=0; i<krawedzie; i++) ///// drzewo ////
+    {
+        a=kolejka_priorytetowa[i].v1;
+        b=kolejka_priorytetowa[i].v2;
+
+        //////////////////////////////////////////////////////////////////////////////
+        if(kolory[a]==0 && kolory[b]==0) //jesli oba nie dodane jeszcze
+        {
+            kolory[a]=(licznik+1);
+            kolory[b]=(licznik+1);
+            licznik++;
+
+            drzewo.push_back(kolejka_priorytetowa[i]); //dodaj do drzewa
+
+        }
+        //////////////////////////////////////////////////////////////////////////////
+
+        else if(kolory[a]!=kolory[b] && kolory[a]>0 && kolory[b]>0) // jesli dodane ale rozne
+        {
+            if(kolory[a]>kolory[b]){tmp=kolory[b];tmq=kolory[a];}
+            else{tmp=kolory[a];tmq=kolory[b];}
+
+            for(int k=0; k<wierzcholki; k++)
+            if(kolory[k]==tmp) kolory[k]=tmq;
+
+            drzewo.push_back(kolejka_priorytetowa[i]);
+
+        }
+        //////////////////////////////////////////////////////////////////////////////
+
+        else if( (kolory[a]>0 && kolory[b]==0)||(kolory[b]>0 && kolory[a]==0) ) //jesli jeden dodany drugi nie
+        {
+            if (kolory[a]>0){kolory[b]=kolory[a];}
+            else{kolory[a]=kolory[b];}
+
+            drzewo.push_back(kolejka_priorytetowa[i]);
+        }
+        //////////////////////////////////////////////////////////////////////////////
+    }
+    cout<<"Sprawdz spojnosc"<<endl;
+    for(int i=0; i<wierzcholki; i++)
+        cout<<kolory[i]<<" ";
+}
+//=======================================// Kruskal
+void Kruskal::wyswietl_drzewo()
+{
+    int suma=0;
+
+    cout<<"\nDrzewo"<<endl;
+
+    for(int i=0;i<drzewo.size();i++)
+    {
+        cout<<drzewo[i].v1<<" "<<drzewo[i].v2<<" "<<drzewo[i].waga<<endl;
+        suma+=drzewo[i].waga;
+    }
+    cout<<"Koszt= "<<suma<<endl;
+
+}
+//=======================================// Prim
+void Prim::stworz_drzewo()
+{
+    int kolory[wierzcholki],a,b;
+    int licznik=0,tmp=0,tmq=0; //pomocnicze
+
+    for(int i=0; i<wierzcholki; i++) kolory[i]=0; // zbiory wierzcholkow pusty =0
+
+    a=kolejka_priorytetowa[0].v1;
+    b=kolejka_priorytetowa[0].v2;
+    kolory[a]=kolory[b]=1;
+    drzewo.push_back(kolejka_priorytetowa[0]); // piersza krawedz
+
+    for(int i=1; i<krawedzie; i++) ///// drzewo ////
+    {
+        a=kolejka_priorytetowa[i].v1;
+        b=kolejka_priorytetowa[i].v2;
+
+        if( (kolory[a]==1 && kolory[b]==0)||(kolory[b]==1 && kolory[a]==0) )
+        {
+            kolory[a]=kolory[b]=1;
+
+            drzewo.push_back(kolejka_priorytetowa[i]);
+            licznik++;i=0;
+        }
+
+        if(licznik>=(wierzcholki-1))break;
+    }
+}
+//=======================================// Prim
