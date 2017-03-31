@@ -1,0 +1,38 @@
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+bool jestPal(string);
+
+int main()
+{
+    string wyraz;
+    cout<<"(Napisz 'stop' by zakonczyc)"<<endl;
+
+    while(wyraz!="stop")
+    {
+        cout<<" \nPodaj wyraz do sprawdzenia: ";
+        cin>>wyraz;
+        if(jestPal(wyraz)==1)cout<<"TAK"<<endl;
+        else cout<<"NIE"<<endl;
+    }
+}
+
+bool jestPal(string wyraz)
+{
+    int a=0,b;
+    b=wyraz.length();
+
+    //cout<<a<<" "<<b<<endl;
+    //cout<<wyraz.substr(a,b)<<endl;
+
+    if(a!=b)
+    {
+        if(wyraz[a]!=wyraz[b-1])return 0;
+        else return jestPal(wyraz.substr(a+1,b-2));
+    }
+    else return 1;
+
+}
+
