@@ -1,0 +1,1388 @@
+#include <iostream>
+#include <windows.h>
+#include <cstdio>
+#include <string>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+ struct Ruch
+    {
+        int _ktory;
+        int _x,_y;      // z
+        int x,y;       // do
+    };
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class Gracz
+{
+public:
+
+    int x, y, _x, _y;
+    int pionkek[12][9][9]; // "ktory x y"
+
+    Gracz() // ustawienie na planszy
+    {
+        for(int i=0; i<12; i++)
+        for(int j=0; j<9; j++)
+        for(int k=0; k<9; k++)
+           pionkek[i][j][k]=0;
+
+
+            pionkek[0][2][7]=1; //rzad 7
+            pionkek[1][4][7]=1;
+            pionkek[2][6][7]=1;
+            pionkek[3][8][7]=1;
+
+            pionkek[4][1][8]=1; //rzad 8
+            pionkek[5][3][8]=1;
+            pionkek[6][5][8]=1;
+            pionkek[7][7][8]=1;
+
+            pionkek[8] [1][6]=1; //rzad 6
+            pionkek[9] [3][6]=1;
+            pionkek[10][5][6]=1;
+            pionkek[11][7][6]=1;
+    }
+
+};
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class SI :public Gracz
+{
+public:
+
+    SI() // ustawienie na planszy
+    {
+        for(int i=0; i<12; i++)
+        for(int j=0; j<9; j++)
+        for(int k=0; k<9; k++)
+            pionkek[i][j][k]=0;
+
+
+            pionkek[0][2][1]=1;
+            pionkek[1][4][1]=1;
+            pionkek[2][6][1]=1;
+            pionkek[3][8][1]=1;
+
+            pionkek[4][1][2]=1;
+            pionkek[5][3][2]=1;
+            pionkek[6][5][2]=1;
+            pionkek[7][7][2]=1;
+
+            pionkek[8][2][3]=1;
+            pionkek[9][4][3]=1;
+            pionkek[10][6][3]=1;
+            pionkek[11][8][3]=1;
+    }
+
+};
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class Plansza
+{
+    Ruch ruch_bicia;
+public:
+
+ //----------------------------------------------------------------- Plansza
+ void rysuj(Gracz,SI);
+
+ void rzad_1(int,Gracz,SI);
+
+ void rzad_2(int,Gracz,SI);
+
+ void gora(int);
+
+ void dol(int);
+
+ //----------------------------------------------------------------- Gracz
+
+ bool ruch_gracza(Gracz&,SI&);
+
+ bool poprawny_ruch_pionka_gracza(Gracz&,SI&,int,int,int,int);
+
+ bool poprawny_ruch_damka_gracza(Gracz&,SI&,int,int,int,int);
+
+ bool sprawdz_dodakowe_bicie_w_przod(Gracz&,SI&,int,int,int);
+
+ bool sprawdz_dodakowe_bicie_w_przo_i_tyl(Gracz&,SI&,int,int,int);
+
+ //----------------------------------------------------------------- SI
+
+ bool ruch_SI_1(Gracz&,SI&);
+
+ int ocena(Gracz&,SI&,Ruch);
+
+ bool poprawny_ruch_pionka_SI(Gracz&,SI&,int,int,int,int);
+
+ bool poprawny_ruch_damka_SI(Gracz&,SI&,int,int,int,int);
+
+ bool sprawdz_dodakowe_bicie_pionka_SI(Gracz&,SI&,Ruch);
+
+ int kolejne_bicie(Gracz&,SI&,Ruch);
+
+};
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+int main()
+{
+
+
+Gracz g;
+Plansza p;
+SI s;
+
+ while(1)
+    {
+        int ruch_gracza=0;
+        p.rysuj(g,s);
+
+        while( ruch_gracza==0 ) //gracz
+        {
+            ruch_gracza=p.ruch_gracza(g,s);
+            system("cls");
+            p.rysuj(g,s);
+        }
+
+        p.ruch_SI_1(g,s);
+        Sleep(400);
+        system("cls");
+    }
+
+
+cout<<"\n\n"<<endl;
+}
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void Plansza::rysuj(Gracz g, SI s)
+{
+
+gora(0);
+
+for(int k=0; k<4; k++)
+{
+   rzad_1(k,g,s);
+   rzad_2(k,g,s);
+}
+
+dol(0);
+
+}
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void Plansza::rzad_1(int wiersz, Gracz g,SI s)
+{
+    int pomoc=0;
+
+    HANDLE hOut;  hOut = GetStdHandle( STD_OUTPUT_HANDLE );
+
+    for(int i=0; i<3; i++)
+    {
+//----------------------------------------------------------------------------------------------------------------
+        if(i==1)
+        {
+            SetConsoleTextAttribute( hOut, 0x00 );
+            cout<<"\n    ";
+            SetConsoleTextAttribute( hOut, FOREGROUND_GREEN| FOREGROUND_INTENSITY );
+            cout<<2*wiersz+1;
+            SetConsoleTextAttribute( hOut, 0x00 );
+            cout<<"    ";
+        }
+        else
+        {
+            SetConsoleTextAttribute( hOut, 0x00 );
+            cout<<"\n         ";
+        }
+//----------------------------------------------------------------------------------------------------------------
+        for(int j=0; j<4; j++)  // plansza
+        {
+         SetConsoleTextAttribute( hOut, BACKGROUND_GREEN |  BACKGROUND_BLUE |  BACKGROUND_RED |  BACKGROUND_INTENSITY );
+         cout<<"       ";
+
+
+            SetConsoleTextAttribute( hOut, 0x80 );
+
+            for(int ktory=0; ktory<12; ktory++)
+            {
+                if(i==1 && g.pionkek[ktory][2*j+2][2*wiersz+1]==1)
+                {
+                    cout <<"   ";
+                    SetConsoleTextAttribute( hOut, FOREGROUND_BLUE| FOREGROUND_INTENSITY + 0x80 );
+                    cout<<"O";
+                    SetConsoleTextAttribute( hOut, 0x80 );
+                    cout<<"   ";
+                    pomoc=1;
+                }
+                else if(i==1 && s.pionkek[ktory][2*j+2][2*wiersz+1]==1)
+                {
+                    cout <<"   ";
+                    SetConsoleTextAttribute( hOut, FOREGROUND_RED| FOREGROUND_INTENSITY + 0x80 );
+                    cout<<"O";
+                    SetConsoleTextAttribute( hOut, 0x80 );
+                    cout<<"   ";
+                    pomoc=1;
+                }
+                else if(i==1 && g.pionkek[ktory][2*j+2][2*wiersz+1]==2)
+                {
+                    cout <<"  ";
+                    SetConsoleTextAttribute( hOut, FOREGROUND_BLUE| FOREGROUND_INTENSITY + 0x80 );
+                    cout<<"(o)";
+                    SetConsoleTextAttribute( hOut, 0x80 );
+                    cout<<"  ";
+                    pomoc=1;
+                }
+                else if(i==1 && s.pionkek[ktory][2*j+2][2*wiersz+1]==2)
+                {
+                    cout <<"  ";
+                    SetConsoleTextAttribute( hOut, FOREGROUND_RED| FOREGROUND_INTENSITY + 0x80 );
+                    cout<<"(o)";
+                    SetConsoleTextAttribute( hOut, 0x80 );
+                    cout<<"  ";
+                    pomoc=1;
+                }
+            }
+
+
+                    if(pomoc==0) cout<<"       ";
+                    pomoc=0;
+
+        }
+//----------------------------------------------------------------------------------------------------------------
+        if(i==1)
+        {
+            SetConsoleTextAttribute( hOut, 0x00 );
+            cout<<"    ";
+            SetConsoleTextAttribute( hOut, FOREGROUND_GREEN| FOREGROUND_INTENSITY );
+            cout<<2*wiersz+1;
+            SetConsoleTextAttribute( hOut, 0x00 );
+            cout<<"    ";
+        }
+        else
+        {
+            SetConsoleTextAttribute( hOut, 0x00 );
+            cout<<"         ";
+        }
+ //----------------------------------------------------------------------------------------------------------------
+    }
+}
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void Plansza::rzad_2(int wiersz, Gracz g, SI s)
+{
+    int pomoc=0;
+    HANDLE hOut;  hOut = GetStdHandle( STD_OUTPUT_HANDLE );
+
+    for(int i=0; i<3; i++)
+    {
+//----------------------------------------------------------------------------------------------------------------
+         if(i==1)
+        {
+            SetConsoleTextAttribute( hOut, 0x00 );
+            cout<<"\n    ";
+            SetConsoleTextAttribute( hOut, FOREGROUND_GREEN| FOREGROUND_INTENSITY );
+            cout<<2*wiersz+2;
+            SetConsoleTextAttribute( hOut, 0x00 );
+            cout<<"    ";
+        }
+        else
+        {
+            SetConsoleTextAttribute( hOut, 0x00 );
+            cout<<"\n         ";
+        }
+//----------------------------------------------------------------------------------------------------------------
+
+        for(int j=0; j<4; j++)
+        {
+             SetConsoleTextAttribute( hOut, 0x80 );
+
+            for(int ktory=0; ktory<12; ktory++)
+            {
+
+                if(i==1 && g.pionkek[ktory][2*j+1][2*wiersz+2]==1)
+                {
+                    cout <<"   ";
+                    SetConsoleTextAttribute( hOut, FOREGROUND_BLUE| FOREGROUND_INTENSITY + 0x80 );
+                    cout<<"O";
+                    SetConsoleTextAttribute( hOut, 0x80 );
+                    cout<<"   ";
+                    pomoc=1;
+                }
+                else if (i==1 && s.pionkek[ktory][2*j+1][2*wiersz+2]==1)
+                {
+                    cout <<"   ";
+                    SetConsoleTextAttribute( hOut, FOREGROUND_RED| FOREGROUND_INTENSITY + 0x80 );
+                    cout<<"O";
+                    SetConsoleTextAttribute( hOut, 0x80 );
+                    cout<<"   ";
+                    pomoc=1;
+                }
+                else if(i==1 && g.pionkek[ktory][2*j+1][2*wiersz+2]==2)
+                {
+                    cout <<"  ";
+                    SetConsoleTextAttribute( hOut, FOREGROUND_BLUE| FOREGROUND_INTENSITY + 0x80 );
+                    cout<<"(o)";
+                    SetConsoleTextAttribute( hOut, 0x80 );
+                    cout<<"  ";
+                    pomoc=1;
+                }
+                else if (i==1 && s.pionkek[ktory][2*j+1][2*wiersz+2]==2)
+                {
+                    cout <<"  ";
+                    SetConsoleTextAttribute( hOut, FOREGROUND_RED| FOREGROUND_INTENSITY + 0x80 );
+                    cout<<"(o)";
+                    SetConsoleTextAttribute( hOut, 0x80 );
+                    cout<<"  ";
+                    pomoc=1;
+                }
+            }
+
+
+             if(pomoc==0)cout<<"       ";
+                pomoc=0;
+
+
+
+
+            SetConsoleTextAttribute( hOut, BACKGROUND_GREEN |  BACKGROUND_BLUE |  BACKGROUND_RED |  BACKGROUND_INTENSITY );
+        cout<<"       ";
+        }
+//----------------------------------------------------------------------------------------------------------------
+        if(i==1)
+        {
+           SetConsoleTextAttribute( hOut, 0x00 );
+        cout<<"    ";
+        SetConsoleTextAttribute( hOut, FOREGROUND_GREEN| FOREGROUND_INTENSITY );
+        cout<<2*wiersz+2;
+        SetConsoleTextAttribute( hOut, 0x00 );
+        cout<<"    ";
+        }
+        else
+        {
+            SetConsoleTextAttribute( hOut, 0x00 );
+            cout<<"         ";
+        }
+//----------------------------------------------------------------------------------------------------------------
+    }
+}
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void Plansza::gora(int wiersz)
+{
+      HANDLE hOut;  hOut = GetStdHandle( STD_OUTPUT_HANDLE );
+
+    for(int i=0; i<3; i++)
+    {
+//----------------------------------------------------------------------------------------------------------------
+            SetConsoleTextAttribute( hOut, 0x00 );
+            SetConsoleTextAttribute( hOut, FOREGROUND_BLUE| FOREGROUND_INTENSITY );
+            cout<<"\n  |||";
+            //SetConsoleTextAttribute( hOut, FOREGROUND_RED| FOREGROUND_INTENSITY );
+            cout<<"|||";
+            SetConsoleTextAttribute( hOut, 0x00 );
+            //SetConsoleTextAttribute( hOut, FOREGROUND_GREEN| FOREGROUND_INTENSITY );
+            cout<<" ";
+//----------------------------------------------------------------------------------------------------------------
+        for(int j=0; j<4; j++)  // plansza
+        {
+
+        SetConsoleTextAttribute( hOut, 0x00 );
+
+            if(i==1)
+            {
+                cout.widen(9);
+                cout <<"   ";
+                SetConsoleTextAttribute( hOut, FOREGROUND_GREEN| FOREGROUND_INTENSITY );
+                cout<<2*j+1;
+                SetConsoleTextAttribute( hOut, 0x00 );
+                cout<<"   ";
+            }
+            else cout<<"       ";
+
+            if(i==1)
+            {
+                cout <<"   ";
+                SetConsoleTextAttribute( hOut, FOREGROUND_GREEN| FOREGROUND_INTENSITY );
+                cout<<2*j+2;;
+                cout<<"   ";
+            }
+            else cout<<"       ";
+
+        }
+//----------------------------------------------------------------------------------------------------------------
+            SetConsoleTextAttribute( hOut, 0x00 );
+            SetConsoleTextAttribute( hOut, FOREGROUND_BLUE| FOREGROUND_INTENSITY );
+            cout<<" ||";
+            //SetConsoleTextAttribute( hOut, FOREGROUND_RED| FOREGROUND_INTENSITY );
+            cout<<"||||";
+            SetConsoleTextAttribute( hOut, 0x00 );
+            //SetConsoleTextAttribute( hOut, FOREGROUND_BLUE| FOREGROUND_INTENSITY );
+            cout<<"||";
+    }
+}
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void Plansza::dol(int wiersz)
+{
+      HANDLE hOut;  hOut = GetStdHandle( STD_OUTPUT_HANDLE );
+
+    for(int i=0; i<3; i++)
+    {
+//----------------------------------------------------------------------------------------------------------------
+            SetConsoleTextAttribute( hOut, 0x00 );
+            SetConsoleTextAttribute( hOut, FOREGROUND_BLUE| FOREGROUND_INTENSITY );
+            cout<<"\n  |||";
+            //SetConsoleTextAttribute( hOut, FOREGROUND_RED| FOREGROUND_INTENSITY );
+            cout<<"|||";
+            SetConsoleTextAttribute( hOut, 0x00 );
+            //SetConsoleTextAttribute( hOut, FOREGROUND_GREEN| FOREGROUND_INTENSITY );
+            cout<<" ";
+//----------------------------------------------------------------------------------------------------------------
+        for(int j=0; j<4; j++)  // plansza
+        {
+
+        SetConsoleTextAttribute( hOut, 0x00 );
+
+            if(i==1)
+            {
+                cout.widen(9);
+                cout <<"   ";
+                SetConsoleTextAttribute( hOut, FOREGROUND_GREEN| FOREGROUND_INTENSITY );
+                cout<<2*j+1;
+                SetConsoleTextAttribute( hOut, 0x00 );
+                cout<<"   ";
+            }
+            else cout<<"       ";
+
+            if(i==1)
+            {
+                cout <<"   ";
+                SetConsoleTextAttribute( hOut, FOREGROUND_GREEN| FOREGROUND_INTENSITY );
+                cout<<2*j+2;;
+                cout<<"   ";
+            }
+            else cout<<"       ";
+
+        }
+//----------------------------------------------------------------------------------------------------------------
+            SetConsoleTextAttribute( hOut, 0x00 );
+            SetConsoleTextAttribute( hOut, FOREGROUND_BLUE| FOREGROUND_INTENSITY );
+            cout<<" ||";
+            //SetConsoleTextAttribute( hOut, FOREGROUND_RED| FOREGROUND_INTENSITY );
+            cout<<"||||";
+            SetConsoleTextAttribute( hOut, 0x00 );
+            //SetConsoleTextAttribute( hOut, FOREGROUND_BLUE| FOREGROUND_INTENSITY );
+            cout<<"||";
+    }
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////// GRACZ
+bool Plansza::ruch_gracza(Gracz &g,SI &s)
+{
+    bool ruch=1;
+    int pionek=0;
+    int _ktory,_x,_y; //sprwdzanie dodatkowego bicia
+
+    HANDLE hOut;  hOut = GetStdHandle( STD_OUTPUT_HANDLE );
+    SetConsoleTextAttribute( hOut, FOREGROUND_GREEN | FOREGROUND_RED | FOREGROUND_INTENSITY  );
+
+    do
+    {
+    cout<<"\n\n * Podaja aktualne wspolrzedne pionka: X Y : "; cin>>g._x>>g._y;
+
+    cout<<"\n * Podaja docelowe wspolrzedne pionka: X Y : "; cin>>g.x>>g.y;
+
+    }while(g.x>8 || g._x>8 || g.y>8 || g._y>8);
+
+    SetConsoleTextAttribute( hOut, FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY  );
+
+//-----------------------------------------------------------------------------------------------------------
+
+    for(int ktory=0; ktory<12; ktory++) //sprawdzam co tam jest
+    {
+        if(g.pionkek[ktory][g._x][g._y]==1) pionek=1;   //pionek
+
+        else if(g.pionkek[ktory][g._x][g._y]==2) pionek=2;  //damka
+    }
+//-----------------------------------------------------------------------------------------------------------
+
+    switch (pionek)
+    {
+
+//------------------------------------------------------------------------------------------------------------ nic
+        case 0:
+        {
+
+                    cout<<"\n - Nie ma tam twojego pionka (-_-) "<<endl;
+                    Sleep(1000); return 0;  break;
+        }
+//------------------------------------------------------------------------------------------------------------ pionek
+        case 1:
+        {
+
+
+                if( poprawny_ruch_pionka_gracza(g,s, g._x, g._y, g.x, g.y)==1 )
+                {
+
+                    for(int ktory=0; ktory<12; ktory++)
+                    {
+                        if(g.pionkek[ktory][g._x][g._y]>0) //zmiana miejsca
+                        {
+                            if(g.y==1)g.pionkek[ktory][g.x][g.y]=2; // jesli w lini promocji to -> damka
+                            else g.pionkek[ktory][g.x][g.y]=1;
+
+                            g.pionkek[ktory][g._x][g._y]=0;
+                            _ktory=ktory; _x=g.x ;_y=g.y;
+
+                        }
+
+                        if(s.pionkek[ktory][g.x-1][g.y+1]>0 && g.x==g._x+2 ) // bicie w prawp
+                        {
+                            s.pionkek[ktory][g.x-1][g.y+1]=0;
+                            cout<<" ... (-_-)"<<endl;
+                            ruch=0;
+                        }
+
+                        else if(s.pionkek[ktory][g.x+1][g.y+1]>0 && g.x==g._x-2)   //bicie w lewo
+                        {
+                            s.pionkek[ktory][g.x+1][g.y+1]=0;
+                            cout<<" ... (-_-)"<<endl;
+                            ruch=0;
+
+                        }
+                    }
+                }
+
+                else
+                {
+
+                    cout<<"\n - Bledny ruch (-_-) "<<endl;
+                    Sleep(1000);    return 0;   break;
+                }
+
+
+                if( sprawdz_dodakowe_bicie_w_przod(g,s,_ktory,_x,_y)==1 && ruch==0)return 0;
+                else return 1;
+
+                break;
+        }
+//------------------------------------------------------------------------------------------------------------ damka
+        case 2:
+            {
+
+                 if( poprawny_ruch_damka_gracza(g,s, g._x, g._y, g.x, g.y)==1 )
+                 {
+                    for(int ktory=0; ktory<12; ktory++)
+                    {
+                        if(g.pionkek[ktory][g._x][g._y]>0) //zmiana miejsca
+                        {
+                            g.pionkek[ktory][g.x][g.y]=2;
+
+                            g.pionkek[ktory][g._x][g._y]=0;
+
+                            _ktory=ktory; _x=g.x ;_y=g.y;
+
+                            ruch=1;
+                        }
+
+                        if(s.pionkek[ktory][g.x-1][g.y+1]>0 && g.x==g._x+2 && g.y==g._y-2 ) // bicie w prawo przod
+                        {
+                            s.pionkek[ktory][g.x-1][g.y+1]=0;
+                            ruch=0;
+                        }
+                        else if(s.pionkek[ktory][g.x+1][g.y+1]>0 && g.x==g._x-2 && g.y==g._y-2)   // bicie w lewo przod
+                        {
+                            s.pionkek[ktory][g.x+1][g.y+1]=0;
+                            ruch=0;
+                        }
+
+                        else if(s.pionkek[ktory][g.x-1][g.y-1]>0 && g.x==g._x+2 && g.y==g._y+2)    // do tyu w prawo
+                        {
+                            s.pionkek[ktory][g.x-1][g.y-1]=0;
+                            ruch=0;
+                        }
+                        else if(s.pionkek[ktory][g.x+1][g.y-1]>0 && g.x==g._x-2 && g.y==g._y+2)   // do tylu w lewo
+                        {
+                            s.pionkek[ktory][g.x+1][g.y-1]=0;
+                            ruch=0;
+                        }
+                    }
+                 }
+
+                 else
+                {
+                    cout<<"\n - Bledny ruch (o_o) "<<endl;
+                    Sleep(1000);    return 0;   break;
+                }
+
+
+                if( sprawdz_dodakowe_bicie_w_przo_i_tyl(g,s,_ktory,_x,_y)==1 && ruch==0)    // dodatkowe bicie
+                       return 0;
+
+
+                break;
+            }
+//------------------------------------------------------------------------------------------------------------
+
+    }
+        return ruch;
+}
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+bool Plansza::poprawny_ruch_pionka_gracza(Gracz &g,SI &s, int _x, int _y, int x, int y)
+{
+    bool ruch=1;
+
+    if(x<1 || x>8 || y<1 || y>8) ruch=0;    // czy poza plansza
+
+    if(x>_x+2 || x<_x-2 || y<_y-2 || y>_y) ruch=0; //ruch pionka
+
+    if(x!=_x+1 && x!=_x+2 && x!=_x-1 && x!=_x-2) ruch=0; // bedny x
+
+    for(int ktory=0; ktory<12; ktory++)   // czy nie ma tam gracza
+    {
+        if(g.pionkek[ktory][x][y]>0) ruch=0;
+    }
+
+    for(int ktory=0; ktory<12; ktory++)   // czy nie ma tam SI
+    {
+        if(s.pionkek[ktory][x][y]>0) ruch=0;
+    }
+
+    if(x==_x+2) // skok w prawo przez swojego
+    {
+        for(int ktory=0; ktory<12; ktory++)
+        {
+            if(g.pionkek[ktory][x-1][y+1]>0) ruch=0;
+        }
+    }
+
+    if(x==_x-2) // skok w lewo
+    {
+        for(int ktory=0; ktory<12; ktory++)
+        {
+            if(g.pionkek[ktory][x+1][y+1]>0) ruch=0;
+        }
+    }
+
+
+    return ruch; // 1 dobry ruch
+}
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+bool Plansza::poprawny_ruch_damka_gracza(Gracz &g,SI &s, int _x, int _y, int x, int y) // !
+{
+    bool ruch=1;
+
+    if(x<1 || x>8 || y<1 || y>8) ruch=0;    // czy poza plansza
+
+    if(x>_x+2 || x<_x-2 || y<_y-2 || y>_y+2) ruch=0; //ruch damka
+
+    for(int ktory=0; ktory<12; ktory++)   // czy nie ma tam gracza
+    {
+        if(g.pionkek[ktory][x][y]>0) ruch=0;
+    }
+
+    for(int ktory=0; ktory<12; ktory++)   // czy nie ma tam SI
+    {
+        if(s.pionkek[ktory][x][y]>0) ruch=0;
+    }
+
+    if(x==_x+2 && y==_y-2) // skok w prawo przez swojego
+    {
+        for(int ktory=0; ktory<12; ktory++)
+        {
+            if(g.pionkek[ktory][x-1][y+1]>0 || g.pionkek[ktory][x-1][y-1]>0) ruch=0;
+        }
+    }
+
+    if(x==_x+2 && y==_y+2) //skok przez swojego w prawo do tylu
+    {
+        for(int ktory=0; ktory<12; ktory++)
+        {
+            if(g.pionkek[ktory][x-1][y-1]>0 || g.pionkek[ktory][x-1][y-1]>0) ruch=0;
+        }
+    }
+
+    if(x==_x-2 && y==_y-2) // skok w lewo przez swojego
+    {
+        for(int ktory=0; ktory<12; ktory++)
+        {
+            if(g.pionkek[ktory][x+1][y+1]>0 && g.pionkek[ktory][x+1][y-1]>0) ruch=0;
+        }
+    }
+
+    if(x==_x-2 && y==_y+2) // skok w lewo przez swojego do tylu
+    {
+        for(int ktory=0; ktory<12; ktory++)
+        {
+            if(g.pionkek[ktory][x+1][y+1]>0 && g.pionkek[ktory][x+1][y-1]>0) ruch=0;
+        }
+    }
+
+
+    return ruch; // 1 dobry ruch
+}
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+bool Plansza::sprawdz_dodakowe_bicie_w_przod(Gracz &g,SI &s, int _ktory, int _x, int _y) // pionka
+{
+  bool ruch=0;
+
+    for(int ktory=0; ktory<12; ktory++)
+    {
+
+        if(s.pionkek[ktory][_x+1][_y-1]>0 && poprawny_ruch_pionka_gracza(g,s,_x,_y,_x+2,_y-2)) // w prawo 1
+        {
+            ruch=1;
+        }
+//-------------------------------------------------------------------------------------------------------------------
+        else if(s.pionkek[ktory][_x-1][_y-1]>0 && poprawny_ruch_pionka_gracza(g,s,_x,_y,_x-2,_y-2) ) // w lewo 1
+         {
+            ruch=1;
+         }
+    }
+
+    return ruch;
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+bool Plansza::sprawdz_dodakowe_bicie_w_przo_i_tyl(Gracz &g,SI &s, int _ktory, int _x, int _y)
+{
+bool ruch=0;
+
+    for(int ktory=0; ktory<12; ktory++)
+    {
+//-------------------------------------------------------------------------------------------------------------------
+        if(s.pionkek[ktory][_x+1][_y-1]>0 && poprawny_ruch_damka_gracza(g,s,_x,_y,_x+2,_y-2)) // w prawo 1
+        {
+            ruch=1;
+        }
+//-------------------------------------------------------------------------------------------------------------------
+        else if(s.pionkek[ktory][_x-1][_y-1]>0 && poprawny_ruch_damka_gracza(g,s,_x,_y,_x-2,_y-2) ) // w lewo 1
+         {
+            ruch=1;
+         }
+//-------------------------------------------------------------------------------------------------------------------
+        else if(s.pionkek[ktory][_x-1][_y+1]>0 && poprawny_ruch_damka_gracza(g,s,_x,_y,_x-2,_y+2) ) // w lewo 1
+         {
+            ruch=1;
+         }
+//-------------------------------------------------------------------------------------------------------------------
+        else if(s.pionkek[ktory][_x+1][_y+1]>0 && poprawny_ruch_damka_gracza(g,s,_x,_y,_x+2,_y+2) ) // w prawo 1
+         {
+            ruch=1;
+         }
+//-------------------------------------------------------------------------------------------------------------------
+    }
+
+    return ruch;
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////// SI
+bool Plansza::ruch_SI_1(Gracz &g,SI &s)
+{
+
+    HANDLE hOut;  hOut = GetStdHandle( STD_OUTPUT_HANDLE );
+    SetConsoleTextAttribute( hOut, FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY  );
+
+    cout<<endl;
+    bool bicie=0,pomoc;
+    int pionek=0, maks=-999, nr_ruchu, licznik=0;
+
+    Ruch r, najlepszy_r; //struktura ruchu
+
+    vector <Ruch> lista_ruchow;
+    vector <int> oceny;
+
+    for(int i=1; i<9; i++)   // x
+    for(int j=1; j<9; j++)  // y
+    for(int ktory=0; ktory<12; ktory++) // kazdy pionek
+            {
+
+                if(s.pionkek[ktory][i][j]>0)
+                {
+                    licznik++;
+
+                    if(s.pionkek[ktory][i][j]==1) pionek=1; // pionek
+                    else if(s.pionkek[ktory][i][j]==2)   pionek=2;  //damka
+
+
+                    switch(pionek)
+                    {
+//-----------------------------------------------------------------------------------------------------------
+                    case 1: // pionek
+                    {
+                        if( poprawny_ruch_pionka_SI(g,s,i,j,i+1,j+1) )   // w prawo o 1
+                        {
+                            //cout<<"p1 "<<i<<" "<<j<<endl;
+
+                            r._ktory=ktory;
+                            r._x=i;
+                            r._y=j;
+                            r.x=i+1;
+                            r.y=j+1;
+
+                            lista_ruchow.push_back(r);
+                        }
+
+                        if( poprawny_ruch_pionka_SI(g,s,i,j,i-1,j+1) ) // w lewo o 1
+                        {
+                           // cout<<"l1 "<<i<<" "<<j<<endl;
+
+                            r._ktory=ktory;
+                            r._x=i;
+                            r._y=j;
+                            r.x=i-1;
+                            r.y=j+1;
+
+                            lista_ruchow.push_back(r);
+                        }
+                        if( poprawny_ruch_pionka_SI(g,s,i,j,i+2,j+2) ) // w prawo o 2
+                        {
+                            //cout<<"p2 "<<i<<" "<<j<<endl;
+
+                            r._ktory=ktory;
+                            r._x=i;
+                            r._y=j;
+                            r.x=i+2;
+                            r.y=j+2;
+
+                            lista_ruchow.push_back(r);
+                        }
+
+                        if( poprawny_ruch_pionka_SI(g,s,i,j,i-2,j+2) ) // w lewo o 2
+                        {
+                           // cout<<"l2 "<<i<<" "<<j<<endl;
+
+                            r._ktory=ktory;
+                            r._x=i;
+                            r._y=j;
+                            r.x=i-2;
+                            r.y=j+2;
+
+                            lista_ruchow.push_back(r);
+                        }
+
+                        break;
+                    }
+
+//----------------------------------------------------------------------------------------------------------- Damka
+                    case 2:
+                    {
+
+                        break;
+                    }
+
+//-----------------------------------------------------------------------------------------------------------
+                    }   // switch
+                }   // if
+            }   // for
+//----------------------------------------------------------------------------------------------------------- Koniec gry lub brak ruchu
+
+        if(licznik==0) // Koniec gry
+        {
+            cout<<" Przegralem ! ()_() "<<endl;
+            return 0;
+        }
+
+        if(lista_ruchow.size()==0) // brak ruchu SI
+        {
+            cout<<"Nie mam gdzie sie ruszyc (-_-)"<<endl;
+            return 0;
+        }
+
+//-----------------------------------------------------------------------------------------------------------
+
+    for(int k=0; k<lista_ruchow.size(); k++) // ocenianie i wstawianie na lise ocen
+    {
+        oceny.push_back( ocena(g,s,lista_ruchow[k])  );
+    }
+
+    for(int k=0; k<oceny.size(); k++) // szukanie maks
+    {
+        if( oceny[k]>maks )
+        {
+            maks=oceny[k];
+            nr_ruchu=k;
+        }
+    }
+
+//----------------------------------------------------------------------------------------------------------- przepisanie wartosci do ruchu
+
+najlepszy_r._x=lista_ruchow[nr_ruchu]._x;   najlepszy_r.x=lista_ruchow[nr_ruchu].x;
+najlepszy_r._y=lista_ruchow[nr_ruchu]._y;   najlepszy_r.y=lista_ruchow[nr_ruchu].y;
+najlepszy_r._ktory=lista_ruchow[nr_ruchu]._ktory;
+
+//----------------------------------------------------------------------------------------------------------- Pionek i Damka o 1 wszedzie
+if(najlepszy_r.x==najlepszy_r._x+1 || najlepszy_r.x==najlepszy_r._x-1) // Ruch o 1 w prawo i lewo
+{
+    cout<<"... to ja na ["<<najlepszy_r.x<<","<<najlepszy_r.y<<"] (o_o)"<<endl;
+
+    if(s.pionkek[najlepszy_r._ktory][najlepszy_r._x][najlepszy_r._y]==1) // pionek
+    {
+        s.pionkek[najlepszy_r._ktory][najlepszy_r._x][najlepszy_r._y]=0;
+        s.pionkek[najlepszy_r._ktory][najlepszy_r.x][najlepszy_r.y]=1;
+
+        if(najlepszy_r.y==8)    //zmiana na damke
+        {
+            s.pionkek[najlepszy_r._ktory][najlepszy_r.x][najlepszy_r.y]=2;
+        }
+    }
+    else if(s.pionkek[najlepszy_r._ktory][najlepszy_r._x][najlepszy_r._y]==2) // damka
+    {
+        s.pionkek[najlepszy_r._ktory][najlepszy_r._x][najlepszy_r._y]=0;
+        s.pionkek[najlepszy_r._ktory][najlepszy_r.x][najlepszy_r.y]=2;
+    }
+}
+//-----------------------------------------------------------------------------------------------------------
+else if(najlepszy_r.x==najlepszy_r._x+2 && najlepszy_r.y==najlepszy_r._y+2) //Bicie w prawo do przodu
+{
+    cout<<" Bije -> ["<<najlepszy_r.x-1<<","<<najlepszy_r.y-1<<"] ja -> ["<<najlepszy_r.x<<","<<najlepszy_r.y<<"]  (^_^)"<<endl;
+
+    if(s.pionkek[najlepszy_r._ktory][najlepszy_r._x][najlepszy_r._y]==1) // pionek
+    {
+        s.pionkek[najlepszy_r._ktory][najlepszy_r._x][najlepszy_r._y]=0;
+        s.pionkek[najlepszy_r._ktory][najlepszy_r.x][najlepszy_r.y]=1;
+
+        if(najlepszy_r.y==8)    //zmiana na damke
+        {
+            s.pionkek[najlepszy_r._ktory][najlepszy_r.x][najlepszy_r.y]=2;
+        }
+    }
+    else if(s.pionkek[najlepszy_r._ktory][najlepszy_r._x][najlepszy_r._y]==2) // damka
+    {
+        s.pionkek[najlepszy_r._ktory][najlepszy_r._x][najlepszy_r._y]=0;
+        s.pionkek[najlepszy_r._ktory][najlepszy_r.x][najlepszy_r.y]=2;
+    }
+    for(int ktory=0; ktory<12; ktory++) // dla damki trzeba inaczej !
+    {
+        if(g.pionkek[ktory][najlepszy_r.x-1][najlepszy_r.y-1]>0)
+            g.pionkek[ktory][najlepszy_r.x-1][najlepszy_r.y-1]=0;
+    }
+    bicie=1;    //dodatkowe bicie
+}
+//-----------------------------------------------------------------------------------------------------------------------
+else if(najlepszy_r.x==najlepszy_r._x-2 && najlepszy_r.y==najlepszy_r._y+2) // Bicie w lewo do przodu
+{
+    cout<<" Bije -> ["<<najlepszy_r.x+1<<","<<najlepszy_r.y-1<<"] ja -> ["<<najlepszy_r.x<<","<<najlepszy_r.y<<"]  (^_^)"<<endl;
+
+    if(s.pionkek[najlepszy_r._ktory][najlepszy_r._x][najlepszy_r._y]==1) // pionek
+    {
+        s.pionkek[najlepszy_r._ktory][najlepszy_r._x][najlepszy_r._y]=0;
+        s.pionkek[najlepszy_r._ktory][najlepszy_r.x][najlepszy_r.y]=1;
+
+        if(najlepszy_r.y==8)    //zmiana na damke
+        {
+            s.pionkek[najlepszy_r._ktory][najlepszy_r.x][najlepszy_r.y]=2;
+        }
+    }
+    else if(s.pionkek[najlepszy_r._ktory][najlepszy_r._x][najlepszy_r._y]==2) // damka
+    {
+        s.pionkek[najlepszy_r._ktory][najlepszy_r._x][najlepszy_r._y]=0;
+        s.pionkek[najlepszy_r._ktory][najlepszy_r.x][najlepszy_r.y]=2;
+    }
+    for(int ktory=0; ktory<12; ktory++) // dla damki trzeba inaczej !
+    {
+        if(g.pionkek[ktory][najlepszy_r.x+1][najlepszy_r.y-1]>0)
+            g.pionkek[ktory][najlepszy_r.x+1][najlepszy_r.y-1]=0;
+    }
+    bicie=1; //dodatkowe bicie
+}
+//-----------------------------------------------------------------------------------------------------------------------
+else if(najlepszy_r.x==najlepszy_r._x-2 && najlepszy_r.y==najlepszy_r._y-2) // Bicie w lewo do tylu
+{
+    cout<<" Bije -> ["<<najlepszy_r.x+1<<","<<najlepszy_r.y+1<<"] ja -> ["<<najlepszy_r.x<<","<<najlepszy_r.y<<"]  (^_^)"<<endl;
+
+    if(s.pionkek[najlepszy_r._ktory][najlepszy_r._x][najlepszy_r._y]==2) // damka
+    {
+        s.pionkek[najlepszy_r._ktory][najlepszy_r._x][najlepszy_r._y]=0;
+        s.pionkek[najlepszy_r._ktory][najlepszy_r.x][najlepszy_r.y]=2;
+    }
+    for(int ktory=0; ktory<12; ktory++) // dla damki trzeba inaczej !
+    {
+        if(g.pionkek[ktory][najlepszy_r.x+1][najlepszy_r.y+1]>0)
+            g.pionkek[ktory][najlepszy_r.x+1][najlepszy_r.y+1]=0;
+    }
+
+    bicie=1; //dodatkowe bicie
+}
+//-----------------------------------------------------------------------------------------------------------------------
+else if(najlepszy_r.x==najlepszy_r._x-2 && najlepszy_r.y==najlepszy_r._y-2) // Bicie w prawo do tylu
+{
+    cout<<" Bije -> ["<<najlepszy_r.x-1<<","<<najlepszy_r.y+1<<"] ja -> ["<<najlepszy_r.x<<","<<najlepszy_r.y<<"]  (^_^)"<<endl;
+
+    if(s.pionkek[najlepszy_r._ktory][najlepszy_r._x][najlepszy_r._y]==2) // damka
+    {
+        s.pionkek[najlepszy_r._ktory][najlepszy_r._x][najlepszy_r._y]=0;
+        s.pionkek[najlepszy_r._ktory][najlepszy_r.x][najlepszy_r.y]=2;
+    }
+    for(int ktory=0; ktory<12; ktory++) // dla damki trzeba inaczej !
+    {
+        if(g.pionkek[ktory][najlepszy_r.x-1][najlepszy_r.y+1]>0)
+            g.pionkek[ktory][najlepszy_r.x-1][najlepszy_r.y+1]=0;
+    }
+
+    bicie=1; //dodatkowe bicie
+}
+//-----------------------------------------------------------------------------------------------------------------------
+ruch_bicia=najlepszy_r; //do rekurencji bicia
+
+Sleep(400);
+
+    if(bicie==1)
+    {
+        do
+        {
+            pomoc=sprawdz_dodakowe_bicie_pionka_SI(g,s,ruch_bicia);
+        }
+        while(pomoc==1);
+    }
+
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////// SI
+int Plansza::ocena(Gracz &g, SI &s, Ruch r)
+{
+    bool pomoc=0,pomoc2=0,pomoc3=0,pomoc4=0;
+    int punkty=0;
+
+//-----------------------------------------------------------------------------------------------------------
+    if( r.x==r._x+2 || r.x==r._x-2 ) // Bicie 30p.
+    {
+        punkty+=30;
+
+        punkty+=kolejne_bicie(g,s,r); //!
+
+    }
+//-----------------------------------------------------------------------------------------------------------
+    if( r.x==r._x+1 || r.x==r._x+2) // ochrona swojego w prawo 25p.
+    {
+        for(int ktory=0; ktory<12; ktory++)
+        {
+            if( s.pionkek[ktory][r.x+1][r.y+1]>0 )pomoc=1;
+            if( g.pionkek[ktory][r.x+2][r.y+2]>0 )pomoc2=1;
+
+            if( s.pionkek[ktory][r.x-1][r.y+1]>0 )pomoc3=1;
+            if( g.pionkek[ktory][r.x-2][r.y+2]>0 )pomoc4=1;
+        }
+
+        if( r.x+2>8 || r.x+1>8 || r.y+1>8 || r.y+2>8 ) pomoc=pomoc2=0;
+
+        if( (pomoc && pomoc2) || (pomoc3 && pomoc4)) punkty+=25;
+
+        pomoc=pomoc2=0;
+    }
+//-----------------------------------------------------------------------------------------------------------
+    if( r.x==r._x-1 || r.x==r._x-2 ) // ochrona swojego w lewo 25p.
+    {
+        for(int ktory=0; ktory<12; ktory++)
+        {
+            if( s.pionkek[ktory][r.x-1][r.y+1]>0 )pomoc=1;
+            if( g.pionkek[ktory][r.x-2][r.y+2]>0 )pomoc2=1;
+
+            if ( s.pionkek[ktory][r.x+1][r.y+1]>0) pomoc3=1;
+            if ( g.pionkek[ktory][r.x+2][r.y+2]>0 ) pomoc4=1;
+         }
+
+        if( r.x-2<1 || r.x-1<1 || r.y+1>8 || r.y+2>8 ) pomoc=pomoc2=0;
+
+        if( (pomoc && pomoc2) || (pomoc3 && pomoc4)) punkty+=25;
+
+        pomoc=pomoc2=0;
+    }
+//-----------------------------------------------------------------------------------------------------------
+    if(r.x==r._x-1) // lewo o jeden " podkladanie sie pod bicie " // -30p.
+    {
+        for(int ktory=0; ktory<12; ktory++)
+        {
+            if( g.pionkek[ktory][r.x-1][r.y+1]>0 ) pomoc=1; //pionek gracza naprzeciwko
+        }
+
+        if(pomoc)punkty-=30;
+
+        pomoc=0;
+    }
+//-----------------------------------------------------------------------------------------------------------
+    if(r.x==r._x-1) // lewo o jeden " podkladanie sie pod bicie " 2 // -30p.
+    {
+        for(int ktory=0; ktory<12; ktory++)
+        {
+            if ( g.pionkek[ktory][r.x+1][r.y+1]>0 ) pomoc=1; //pionek gracza naprzeciwko
+
+            if ( g.pionkek[ktory][r.x-1][r.y-1]>0 ) pomoc2=1;
+            if ( s.pionkek[ktory][r.x-1][r.y-1]>0 ) pomoc3=1;
+        }
+
+        if(pomoc==1 && pomoc2==0 && pomoc3==0 && r.x!=1) punkty-=30;
+
+        pomoc=pomoc2=pomoc3=0;
+    }
+//-----------------------------------------------------------------------------------------------------------
+    if(r.x==r._x+1) // prawo o jeden " podkladanie sie pod bicie " // -30p.
+    {
+        for(int ktory=0; ktory<12; ktory++)
+        {
+            if( g.pionkek[ktory][r.x+1][r.y+1]>0 ) pomoc=1; //pionek gracza naprzeciwko
+        }
+
+        if(pomoc)punkty-=30;
+
+        pomoc=0;
+    }
+//-----------------------------------------------------------------------------------------------------------
+    if(r.x==r._x+1) // prawo o jeden " podkladanie sie pod bicie " 2 // -30p.
+    {
+        for(int ktory=0; ktory<12; ktory++)
+        {
+            if ( g.pionkek[ktory][r.x-1][r.y+1]>0 ) pomoc=1; //pionek gracza naprzeciwko
+
+            if ( g.pionkek[ktory][r.x+1][r.y-1]>0 ) pomoc2=1;
+            if ( s.pionkek[ktory][r.x+1][r.y-1]>0 ) pomoc3=1;
+        }
+
+        if(pomoc==1 && pomoc2==0 && pomoc3==0 && r.x!=8) punkty-=30;
+
+         pomoc=pomoc2=pomoc3=0;
+    }
+//-----------------------------------------------------------------------------------------------------------
+
+    return punkty; //wynik
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////// SI
+bool Plansza::poprawny_ruch_pionka_SI(Gracz &g,SI &s, int _x, int _y, int x, int y)
+{
+    bool ruch=1;
+    bool pomoc=0;
+
+//------------------------------------------------------------------------------------------------------
+if(x>0  && x<9 && y>0 && y<9)
+ {
+
+    if(x==_x+2) // skok w prawo przez swojego
+    {
+        for(int ktory=0; ktory<12; ktory++) // przeskoko swojego
+            if(s.pionkek[ktory][x-1][y-1]>0 ) ruch=0;
+    }
+
+    if(x==_x-2) // skok w lewo przez swojego
+    {
+
+        for(int ktory=0; ktory<12; ktory++) // przeskok swojego
+            if(s.pionkek[ktory][x+1][y-1]>0) ruch=0;
+    }
+
+    if(x==_x+2) // bicie w prawo
+    {
+        for(int ktory=0; ktory<12; ktory++) // jesli jest tam gracz
+            if(g.pionkek[ktory][x-1][y-1]>0 ) pomoc=1;
+
+        if(pomoc==0)ruch=0;
+    }
+
+    pomoc=0;
+
+    if(x==_x-2) // bicie w lewo
+    {
+        for(int ktory=0; ktory<12; ktory++) // jesli jest tam gracz
+            if(g.pionkek[ktory][x+1][y-1]>0 ) pomoc=1;
+
+        if(pomoc==0)ruch=0;
+    }
+
+ }
+ else return 0;
+//------------------------------------------------------------------------------------------------------
+
+    if(x<1 || x>8 || y<1 || y>8) ruch=0;    // czy poza plansza
+
+    if(x>_x+2 || x<_x-2 || y>_y+2 || y<_y) ruch=0; //ruch pionka
+
+    if(x!=_x+1 && x!=_x+2 && x!=_x-1 && x!=_x-2) ruch=0; // bedny x
+
+    for(int ktory=0; ktory<12; ktory++)   // czy nie ma tam gracza
+        {
+            if(g.pionkek[ktory][x][y]>0) ruch=0;
+        }
+
+    for(int ktory=0; ktory<12; ktory++)   // czy nie ma tam SI
+        {
+            if(s.pionkek[ktory][x][y]>0) ruch=0;
+        }
+
+//--------------------------------------------------------------------------------------------------------
+
+    return ruch; // 1 dobry ruch
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////// SI
+bool Plansza::poprawny_ruch_damka_SI(Gracz &g,SI &s, int _x, int _y, int x, int y)      // !
+{
+    bool ruch=1;
+
+    if(x<1 || x>8 || y<1 || y>8) ruch=0;    // czy poza plansza     V
+
+    if(x>_x+2 || x<_x-2 || y<_y-2 || y>_y+2) ruch=0; //ruch damka  V
+
+    for(int ktory=0; ktory<12; ktory++)   // czy nie ma tam gracza      V
+    {
+        if(g.pionkek[ktory][x][y]>0) ruch=0;
+    }
+
+    for(int ktory=0; ktory<12; ktory++)   // czy nie ma tam SI      V
+    {
+        if(s.pionkek[ktory][x][y]>0) ruch=0;
+    }
+
+    if(x==x+2 && y==_y-2) // skok w prawo przez swojego do tylu        V
+    {
+        for(int ktory=0; ktory<12; ktory++)
+        {
+            if(s.pionkek[ktory][x-1][y+1]>0 ) ruch=0;
+        }
+    }
+
+    else if(x==_x+2 && y==_y+2) // skok w prawo przez swojego do przodu V
+    {
+        for(int ktory=0; ktory<12; ktory++)
+        {
+            if(s.pionkek[ktory][x-1][y-1]>0 ) ruch=0;
+        }
+    }
+
+    else if(x==_x-2 && y==_y-2) // skok w lewo do tylu      V
+    {
+        for(int ktory=0; ktory<12; ktory++)
+        {
+            if(s.pionkek[ktory][x+1][y+1]>0) ruch=0;
+        }
+    }
+
+    else if(x==_x-2 && y==_y+2) // skok w lewo do przodu        V
+    {
+        for(int ktory=0; ktory<12; ktory++)
+        {
+            if(s.pionkek[ktory][x+1][y-1]>0 ) ruch=0;
+        }
+    }
+
+    return ruch; // 1 dobry ruch
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////// SI
+bool Plansza::sprawdz_dodakowe_bicie_pionka_SI(Gracz& g,SI& s,Ruch r)
+{
+    bool ruch=0;
+    Ruch r1=r, r2=r;    // r1 = prawo r2 = lewo
+    int prawo=0,lewo=0;
+
+//--------------------------------------------------------------------------------------------------------------
+        r1._x=r1.x;     r1._y=r1.y;
+        r1.x+=2;        r1.y+=2;
+
+        if( poprawny_ruch_pionka_SI(g ,s , r1._x, r1._y, r1.x, r1.y) ) // bicie w prawo
+            {
+                prawo=ocena(g,s,r1);
+                ruch=1;
+            }
+//--------------------------------------------------------------------------------------------------------------
+        r2._x=r2.x;     r2._y=r2.y;
+        r2.x-=2;        r2.y+=2;
+
+        if( poprawny_ruch_pionka_SI(g, s, r2._x, r2._y, r2.x, r2.y) ) // bicie w lewo
+            {
+                lewo=ocena(g,s,r2);
+                ruch=1;
+            }
+//--------------------------------------------------------------------------------------------------------------
+    if(prawo>lewo && ruch==1)
+    {
+
+        cout<<" Bije -> ["<<r1.x-1<<","<<r1.y-1<<"] ja -> ["<<r1.x<<","<<r1.y<<"]  (^_^)"<<endl;
+
+        if(s.pionkek[r1._ktory][r1._x][r1._y]==1) // pionek
+        {
+            s.pionkek[r1._ktory][r1._x][r1._y]=0;
+            s.pionkek[r1._ktory][r1.x][r1.y]=1;
+
+            if(r1.y==8)
+            {
+               s.pionkek[r1._ktory][r1.x][r1.y]=2;
+            }
+        }
+
+        for(int ktory=0; ktory<12; ktory++)
+        {
+            if(g.pionkek[ktory][r1.x-1][r1.y-1]>0)
+                g.pionkek[ktory][r1.x-1][r1.y-1]=0;
+        }
+
+      ruch_bicia=r1;
+    }
+//--------------------------------------------------------------------------------------------------------------
+    else if(ruch==1)
+    {
+        cout<<" Bije -> ["<<r2.x+1<<","<<r2.y-1<<"] ja -> ["<<r2.x<<","<<r2.y<<"]  (^_^)"<<endl;
+
+        if(s.pionkek[r2._ktory][r2._x][r2._y]==1) // pionek
+        {
+            s.pionkek[r2._ktory][r2._x][r2._y]=0;
+            s.pionkek[r2._ktory][r2.x][r2.y]=1;
+
+            if(r2.y==8)
+            {
+                s.pionkek[r2._ktory][r2.x][r2.y]=2;
+            }
+        }
+
+        for(int ktory=0; ktory<12; ktory++)
+        {
+            if(g.pionkek[ktory][r2.x+1][r2.y-1]>0)
+                g.pionkek[ktory][r2.x+1][r2.y-1]=0;
+
+
+        }
+
+        ruch_bicia=r2;
+    }
+//--------------------------------------------------------------------------------------------------------------
+   return ruch;
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////// SI
+int Plansza::kolejne_bicie(Gracz& g, SI& s, Ruch rx) // do oceny
+{
+    bool ruch=0;
+    Ruch r1=rx, r2=rx;    // r1 = prawo r2 = lewo
+
+    int prawo=0,lewo=0;
+    int punkty=0;
+
+//--------------------------------------------------------------------------------------------------------------
+        r1._x=r1.x;     r1._y=r1.y;
+        r1.x+=2;        r1.y+=2;
+
+        if( poprawny_ruch_pionka_SI(g ,s , r1._x, r1._y, r1.x, r1.y) ) // bicie w prawo
+            {
+                prawo=ocena(g,s,r1);
+                ruch=1;
+            }
+
+//--------------------------------------------------------------------------------------------------------------
+        r2._x=r2.x;     r2._y=r2.y;
+        r2.x-=2;        r2.y+=2;
+
+        if( poprawny_ruch_pionka_SI(g, s, r2._x, r2._y, r2.x, r2.y) ) // bicie w lewo
+            {
+                lewo=ocena(g,s,r2);
+                ruch=1;
+            }
+
+//--------------------------------------------------------------------------------------------------------------
+
+    if(prawo>lewo && ruch==1)
+    {
+        punkty+=30;
+        kolejne_bicie(g,s,r1);
+    }
+
+//--------------------------------------------------------------------------------------------------------------
+
+    else if(ruch==1)
+    {
+        punkty+=30;
+        kolejne_bicie(g,s,r2);
+    }
+
+    return punkty;
+
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////// SI
+
+
+
+
+
+
