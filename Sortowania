@@ -1,0 +1,375 @@
+#include <iostream>
+#include <cstdlib>
+#include <time.h>
+#include<fstream>
+#include <math.h>
+#include <ctime>
+#include <windows.h>
+using namespace std;
+
+template <class typ>
+class sortowanie
+{
+private:
+    typ *pomocnicza;
+    int wielkosc;
+
+public:
+
+    void _wielkosc(typ rozmiar)
+    {
+        wielkosc=rozmiar;   //ZAPISZ WIELKOSC
+    }
+    void wyswietl(typ*[]);  //WYSWIETL
+    void zapisz(typ*[],typ*[]);    //ZAPISZ
+    void sredni_czas(double *); //SREDNI CZAS SORTOWANIA 100 TABLIC
+    void wczytaj(typ*[],typ*[]);   //  WCZYTAJ
+    void wczytaj2(typ*[],typ*[]);   //KOPOCOWANIE INDEKSY
+    void sprawdz(typ*[]);   //SPRAWDZA CZY POSRORTOWANE
+
+    // LOSOWANIA //
+    typ* stworz_losowe(typ*[]); // LOSOWE
+    typ* stworz_odwrotnie(typ*[]); //ODWROTNIE POSORTOWANE
+    typ* stworz_czesciowo_losowe(typ*[]); //CZESCIOWO POSORTOWANE
+
+    // SORTOWANIA //
+    void scalanie(typ tabl[],typ,typ);    //PRZEZ SCALANIE
+    void szybkie(typ *tablica,int,int); //QUICKSORT
+    void kopcowanie(typ *tablica); //PRZEZ KOPCOWANIE
+    void shella(typ* tablica);  //SORTOWNIE SHELLA
+    void odwrotne(typ *tablica,int,int); //SORTOWANIE ODWROTNE
+
+};
+/////////////////////////////////////////////////////// MAIN
+int main()
+{
+    clock_t s, f;
+    double czas=0;
+    srand(time(NULL));
+    int rozmiar=100; //ROZAMIR TABLIC 10k,50k,100k,500k,1M
+    int*tab[100];   //TABLICA 100 WSKAZNIKOW
+    int*tab2[100];  //KOPIA WYLOSOWANYCH LICZB
+    double czas_tab[100];   //WYNIKI POMIAROW
+
+    sortowanie <int>s1;
+    s1._wielkosc(rozmiar);
+
+    tab[100]=s1.stworz_losowe(tab); //INICJALIZACJA TABLIC LOSOWYMI LICZBAMI
+
+// CZESCIOWE ================================
+    int ile=0*rozmiar; //<= ILE % POSORTOWANYCH
+    for(int i=0; i<100; i++)s1.szybkie(tab[i],0,ile-1);
+//ODWROTNE ===================================
+    for(int i=0; i<100; i++)s1.odwrotne(tab[i],0,rozmiar-1);
+
+    s1.zapisz(tab,tab2);    //ZAPISANIE WYLOSOWANYCH LICZB
+//============================================
+    cout<<"Sortowanie szybkie"<<endl;
+    for(int i=0; i<100; i++)
+    {
+        s=clock();
+
+        s1.szybkie(tab[i],0,rozmiar-1);
+        f=clock();
+
+        czas=(double)(f-s)/(double)(CLOCKS_PER_SEC);
+        czas_tab[i]=czas;
+    }
+    s1.sprawdz(tab);
+    s1.sredni_czas(czas_tab);
+    s1.wczytaj(tab,tab2);
+//============================================
+    cout<<"Sortowanie przez scalanie"<<endl;
+    for(int i=0; i<100; i++)
+    {
+        s=clock();
+
+        s1.scalanie(tab[i],0,rozmiar-1);
+
+        f=clock();
+        czas=(double)(f-s)/(double)(CLOCKS_PER_SEC);
+        czas_tab[i]=czas;
+    }
+    s1.sprawdz(tab);
+    s1.sredni_czas(czas_tab);
+    s1.wczytaj(tab,tab2);
+//============================================
+    cout<<"Sortowanie shella"<<endl;
+    for(int i=0; i<100; i++)
+    {
+        s=clock();
+
+        s1.shella(tab[i]);
+
+        f=clock();
+        czas=(double)(f-s)/(double)(CLOCKS_PER_SEC);
+        czas_tab[i]=czas;
+    }
+    s1.sprawdz(tab);
+    s1.sredni_czas(czas_tab);
+    s1._wielkosc(rozmiar+1);
+    s1.wczytaj2(tab,tab2);
+//============================================
+    cout<<"Sortowanie przez kopcowanie"<<endl;
+    for(int i=0; i<100; i++)
+    {
+        s=clock();
+
+        s1.kopcowanie(tab[i]);
+
+        f=clock();
+        czas=(double)(f-s)/(double)(CLOCKS_PER_SEC);
+        czas_tab[i]=czas;
+    }
+    s1.sprawdz(tab);
+    s1.sredni_czas(czas_tab);
+//===========================================
+
+    s1.sprawdz(tab);
+    cout<<"===== Koniec ======"<<endl;
+}
+
+/////////////////////////////////////////////////////// LOSOWE
+template <class typ>
+typ* sortowanie<typ>::stworz_losowe(typ* tab[])
+{
+    for(int i=0; i<100; i++)
+    {
+        tab[i]=new typ[wielkosc];
+
+        for(int j=0; j<wielkosc; j++)
+            *(tab[i]+j)=rand();
+    }
+}
+/////////////////////////////////////////////////////// ODWROTNE
+template<class typ>
+void sortowanie<typ>::odwrotne(typ *tablica,int lewy,int prawy)
+{
+    typ v=tablica[(lewy+prawy)/2],i,j,pomoc;
+    i=lewy;
+    j=prawy;
+    do
+    {
+        while (tablica[i]>v) i++; //ODROTNIE
+        while (tablica[j]<v) j--; //ODROTNIE
+        if (i<=j)
+        {
+            pomoc=tablica[i];
+            tablica[i]=tablica[j];
+            tablica[j]=pomoc;
+            i++;
+            j--;
+        }
+    }
+    while (i<=j);
+    {
+        if (j>lewy)
+        {
+            odwrotne(tablica,lewy, j);
+        }
+        if (i<prawy)
+        {
+            odwrotne(tablica, i, prawy);
+        }
+    }
+}
+/////////////////////////////////////////////////////// WYSWIETL
+template <class typ>
+void sortowanie<typ>::wyswietl(typ *tab[])
+{
+    for(int i=0; i<1; i++)
+    {
+        cout<<"=== tablica "<<i<<" ==="<<endl;
+        for(int j=0; j<wielkosc; j++)
+            cout<<"["<<i<<"] "<<j<<". "<<*(tab[i]+j)<<endl;
+    }
+}
+/////////////////////////////////////////////////////// ZAPISZ
+template <class typ>
+void sortowanie<typ>::zapisz(typ* tab[],typ* tab2[])
+{
+    for(int i=0; i<100; i++)
+    {
+        tab2[i]=new typ[wielkosc];
+
+        for(int j=0; j<wielkosc; j++)
+        {
+            *(tab2[i]+j)=*(tab[i]+j);
+        }
+    }
+}
+/////////////////////////////////////////////////////// SREDNI CZAS
+template <class typ>
+void sortowanie<typ>::sredni_czas(double* tab)
+{
+    double suma=0;
+
+    for(int i=0; i<100; i++)
+    {
+        suma+=tab[i];
+    }
+    //cout<<"suma czasow"<<suma<<endl;
+    cout<<"sredni czas="<<(suma/100)<<endl;
+    cout<<"==================================="<<endl;
+}
+/////////////////////////////////////////////////////// WCZYTAJ
+template <class typ>
+void sortowanie<typ>::wczytaj(typ* tab[],typ* tab2[])
+{
+    for(int i=0; i<100; i++)
+    {
+
+        for(int j=0; j<wielkosc; j++)
+        {
+            *(tab[i]+j)=*(tab2[i]+j);
+        }
+    }
+}
+/////////////////////////////////////////////////////// WCZYTAJ2
+template <class typ>
+void sortowanie<typ>::wczytaj2(typ* tab[],typ* tab2[])
+{
+    for(int i=0; i<100; i++)
+    {
+
+        for(int j=0; j<wielkosc; j++)
+        {
+            *(tab[i]+(j+1))=*(tab2[i]+j);
+        }
+    }
+}
+/////////////////////////////////////////////////////// SPRAWDZ
+template <class typ>
+void sortowanie<typ>::sprawdz(typ* tab[])
+{
+    for(int i=0; i<100; i++)
+    {
+        for(int j=1; j<(wielkosc-1); j++)
+        {
+            if( *(tab[i]+j)>*(tab[i]+(j+1)) )cout<<"blad\n ";
+        }
+    }
+}
+/////////////////////////////////////////////////////// SCALANIE
+template <class typ>
+void sortowanie<typ>::scalanie(typ tablica[],typ lewy, typ prawy)
+{
+    if(prawy<=lewy) return; //POJEDYNCZY ELEMENT
+
+    int srodek = (prawy+lewy)/2;
+
+    scalanie(tablica, lewy, srodek);
+    scalanie(tablica, srodek+1, prawy);
+
+    pomocnicza=new  typ[wielkosc];  //SCALANIE
+
+    int i, j;
+    for(i= srodek + 1; i>lewy; i--)
+        pomocnicza[i-1] = tablica[i-1];
+
+    for(j = srodek; j<prawy; j++)
+        pomocnicza[prawy+srodek-j] = tablica[j+1];
+
+    for(int k=lewy; k<=prawy; k++)
+        if(pomocnicza[j]<pomocnicza[i])tablica[k] = pomocnicza[j--];
+        else tablica[k] = pomocnicza[i++];
+
+    delete pomocnicza;
+}
+/////////////////////////////////////////////////////// QUICKSORT
+template <class typ>
+void sortowanie<typ>::szybkie(typ *tablica, int lewy, int prawy)
+{
+    typ v=tablica[(lewy+prawy)/2],i,j,pomoc;
+    i=lewy;
+    j=prawy;
+    do
+    {
+        while (tablica[i]<v) i++;
+        while (tablica[j]>v) j--;
+
+        if (i<=j)
+        {
+            pomoc=tablica[i];
+            tablica[i]=tablica[j];
+            tablica[j]=pomoc;
+            i++;
+            j--;
+        }
+    }
+    while (i<=j);
+    {
+        if (j>lewy)
+        {
+            szybkie(tablica,lewy, j);
+        }
+        if (i<prawy)
+        {
+            szybkie(tablica, i, prawy);
+        }
+    }
+}
+/////////////////////////////////////////////////////// KOPCOWANIE
+template <class typ>
+void sortowanie<typ>::kopcowanie(typ *tablica)
+{
+    int i,j,k,pomoc,m;
+
+    for(i=2; i<=wielkosc; i++)
+    {
+        j=i;
+        k=j/2;
+        pomoc=tablica[i];
+        while((k>0) && (tablica[k] < pomoc))
+        {
+            tablica[j]=tablica[k];
+            j=k;
+            k=j/2;
+        }
+        tablica[j] = pomoc;
+    }
+
+    for(i=wielkosc; i>1; i--)
+    {
+        swap(tablica[1], tablica[i]);
+        j=1;
+        k=2;
+        while(k<i)
+        {
+            if((k+1<i) && (tablica[k+1]>tablica[k])) m=k+1;
+            else m=k;
+
+            if(tablica[m]<=tablica[j]) break;
+            swap(tablica[j],tablica[m]);
+            j=m;
+            k=j+j;
+        }
+    }
+}
+/////////////////////////////////////////////////////// SHELLA
+template <class typ>
+void sortowanie<typ>::shella(typ *tablica)
+{
+    int dlugosc,j,i,liczba;
+
+    for(dlugosc=1; dlugosc<wielkosc; dlugosc=3*dlugosc+1);
+
+    dlugosc/=9;
+    while(dlugosc)
+    {
+        for(j=wielkosc-dlugosc-1; j>=0; j--)
+        {
+            liczba=tablica[j];
+            i=j+dlugosc;
+            while((i<wielkosc) && (liczba>tablica[i]))
+            {
+                tablica[i-dlugosc]=tablica[i];
+                i+=dlugosc;
+            }
+            tablica[i-dlugosc]=liczba;
+        }
+        dlugosc/=3;
+    }
+}
+/////////////////////////////////////////////////////// KONIEC
+
