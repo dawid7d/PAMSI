@@ -1,0 +1,76 @@
+#include <iostream>
+#include <queue>
+
+using namespace std;
+
+int main()
+{
+    int opcja=1,liczba,*wsk;
+    queue<int>kolejka;
+
+    while(opcja)
+    {
+        cout<<"Menu:"<<endl;
+        cout<<"1.Dodaj do kolejki"<<endl;
+        cout<<"2.Wyswietl"<<endl;
+        cout<<"3.Usun z kolejki"<<endl;
+        cout<<"4.Usun_calosc"<<endl;
+        cout<<"5.Koniec"<<endl;
+        cout<<"Opcja: ";cin>>opcja;
+
+        switch(opcja)
+        {
+        case 1:
+            cout<<"=========================================="<<endl;
+            cout<<"Podaj liczbe: ";
+            cin>>liczba;
+            kolejka.push(liczba);
+            cout<<"=========================================="<<endl;
+            break;
+///////////////////////////////////////////////////////////////////////////////////////
+        case 2:
+            cout<<"=========================================="<<endl;
+            cout<<"Rozmiar kolejki: "<<kolejka.size()<<endl;
+            cout<<"Poczatek: "<<kolejka.front()<<endl;
+            cout<<"Koniec: "<<kolejka.back()<<endl;
+            cout<<"=========================================="<<endl;
+            break;
+///////////////////////////////////////////////////////////////////////////////////////
+        case 3:
+            if(kolejka.empty())
+            {
+                cout<<"=========================================="<<endl;
+                cout<<"Kolejka jest pusta!"<<endl;
+                cout<<"=========================================="<<endl;
+            }
+            else
+            {
+                cout<<"Usuwanie: ";
+                cout<<kolejka.front();
+                kolejka.pop();
+                cout<<"=========================================="<<endl;
+            }
+            break;
+///////////////////////////////////////////////////////////////////////////////////////
+        case 4:
+
+                cout<<"=========================================="<<endl;
+                cout<<"Usuwam kolejke: "<<endl;
+
+                while(!kolejka.empty())
+                {
+                    cout<<kolejka.front()<<endl;
+                    kolejka.pop();
+
+                }
+                cout<<"Usunieto kolejke"<<endl;
+                cout<<"=========================================="<<endl;
+                break;
+///////////////////////////////////////////////////////////////////////////////////////
+        case 5:
+            opcja=0;
+            break;
+
+        }
+    }
+}
