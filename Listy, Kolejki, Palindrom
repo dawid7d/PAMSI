@@ -1,0 +1,220 @@
+#include <iostream>
+
+using namespace std;
+
+class  Deque
+{
+private:
+    struct Wyraz
+    {
+        char znak;
+        Wyraz *nastepny;
+    };
+public:
+    Deque()
+    {
+        poczatek=koniec=NULL;
+    }
+    ~Deque() {}
+
+    Wyraz *poczatek;
+    Wyraz *koniec;
+    Wyraz *tmp;
+
+    void dodaj_poczatek();
+    void dodaj_koniec();
+    void usun_poczatek();
+    void usun_koniec();
+    void wyswietl_liste();
+    bool sprawdz();
+
+};
+
+int main()
+{
+    int opcja=1;
+    Deque ob1;
+
+    while(opcja)
+
+    {
+        cout<<"\nMenu"<<endl;
+        cout<<"1.Dodaj na poczatek"<<endl;
+        cout<<"2.Dodaj na koniec"<<endl;
+        cout<<"3.Usun poczatek"<<endl;
+        cout<<"4.Usun koniec"<<endl;
+        cout<<"5.Wyswietl"<<endl;
+        cout<<"6.Sprawdz czy ciag znakowy jest palindromem"<<endl;
+        cout<<"7.Koniec"<<endl;
+
+        cout<<"Podaj opcje: ";
+        cin>>opcja;
+        switch(opcja)
+        {
+        case 1:
+            ob1.dodaj_poczatek();
+            break;
+        case 2:
+            ob1.dodaj_koniec();
+            break;
+        case 3:
+            ob1.usun_poczatek();
+            break;
+        case 4:
+            ob1.usun_koniec();
+            break;
+        case 5:
+            ob1.wyswietl_liste();
+            break;
+        case 6:
+            if((ob1.sprawdz())==1)
+                {
+                    cout<<"==================================================="<<endl;
+                    cout<<"Jest palindromem"<<endl;
+                    cout<<"==================================================="<<endl;
+                }
+            else
+            {
+                cout<<"==================================================="<<endl;
+                cout<<"Nie jest palindromem"<<endl;
+                cout<<"==================================================="<<endl;
+            }
+            break;
+        case 7:
+            opcja=0;
+            break;
+        }
+    }
+}
+//////////////////////////////////////////////////////////////////
+void Deque::dodaj_poczatek()
+{
+    Wyraz *tmp=new Wyraz;
+    cout<<"========================================"<<endl;
+    cout<<"\nPodaj znak: "<<endl;
+    cin>>tmp->znak;
+    if(poczatek==NULL)
+    {
+        tmp->nastepny=poczatek;
+        koniec=poczatek=tmp;
+    }
+    else
+    {
+        tmp->nastepny=poczatek;
+        poczatek=tmp;
+    }
+
+}
+//////////////////////////////////////////////////////////////////
+void Deque::dodaj_koniec()
+{
+
+    Wyraz *tmp=new Wyraz;
+    cout<<"========================================"<<endl;
+    cout<<"Podaj znak: ";
+    cin >>tmp->znak;
+    cout<<"========================================"<<endl;
+    if (poczatek== NULL)
+    {
+        tmp->nastepny  = NULL;
+        koniec=poczatek=tmp;
+    }
+    else
+    {
+        tmp->nastepny = NULL;
+        koniec->nastepny = tmp;
+
+        koniec = tmp;
+    }
+}
+//////////////////////////////////////////////////////////////////
+void Deque::wyswietl_liste()
+{
+    Wyraz *tmp=poczatek;
+    cout<<"==================================================="<<endl;
+    cout<<"Lista: poczatek---koniec "<<endl;
+    while(tmp)
+    {
+        cout<<tmp->znak<<" ";
+        tmp=tmp->nastepny;
+    }
+    cout<<"\n==================================================="<<endl;
+}
+//////////////////////////////////////////////////////////////////
+void Deque::usun_poczatek()
+{
+    if(poczatek!=NULL)
+    {
+        Wyraz *tmp;
+        tmp=poczatek;
+        poczatek=poczatek->nastepny;
+        delete tmp;
+    }
+    else
+    {
+        cout<<"==================================================="<<endl;
+        cout<<"Brak elementow"<<endl;
+        cout<<"==================================================="<<endl;
+
+    }
+}
+//////////////////////////////////////////////////////////////////
+void Deque::usun_koniec()
+{
+    Wyraz *tmp=poczatek;
+    if(poczatek==NULL)
+    {
+        cout<<"==================================================="<<endl;
+        cout<<"Brak elementow !"<<endl;
+        cout<<"==================================================="<<endl;
+    }
+
+    else if(tmp->nastepny==NULL)
+    {
+        poczatek=koniec=NULL;
+    }
+    else
+    {
+    while(tmp->nastepny->nastepny!=NULL)
+    {
+        tmp=tmp->nastepny;
+    }
+    tmp->nastepny=NULL;
+    }
+}
+//////////////////////////////////////////////////////////////////
+bool Deque::sprawdz()
+{
+    Wyraz*tmp=poczatek;
+    int licznik=0;
+
+    while(tmp->nastepny!=NULL)
+    {
+        tmp=tmp->nastepny;
+        licznik+=1;
+    }
+    cout<<"Ilosc elementow: "<<licznik<<"\n"<<endl;
+
+    Wyraz *p,*q;
+    p=poczatek;
+
+    while(p!=q)
+    {
+        q=poczatek;
+        //cout<<"licznik "<<licznik<<endl;
+
+        for(int i=0; i<licznik; i++)
+        {
+            q=q->nastepny;
+        }
+        //cout<<"p ="<<p->znak<<" q= "<<q->znak<<endl;
+        if(p->znak!=q->znak)return 0;
+        else
+        {
+            licznik-=1;
+            p=p->nastepny;
+        }
+        if(licznik==0)return 1;
+    }
+    return 1;
+}
